@@ -176,7 +176,18 @@ if __name__ == "__main__":
 				getNextTask(LP)
 # TBLS Algorithm	
 	def TBLS():
-		pass
+		thresholdValue = 65
+		while (readyList!=[] or processingList!=[]):
+			if LP.isLocked():
+				
+				if HP.isLocked():
+					pass
+				else:
+					pass
+			else:
+
+				pass
+		
 	# LTF()
 	print(doneList)
 	print(timeList)
