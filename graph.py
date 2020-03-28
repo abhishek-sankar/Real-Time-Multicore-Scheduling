@@ -81,7 +81,8 @@ def getNextTask(core):
 		processingList.append(readyList.pop(val))
 	else:
 		print("Locked Core gets another task, error!\n")
-
+def getNextTastTBLS(core):
+	pass
 
 if __name__ == "__main__":
 
@@ -181,7 +182,7 @@ if __name__ == "__main__":
 		currentTime = 0
 		presentIteration = 0
 		successFlag = 0
-		while not successFlag:
+		while not successFlag: # change condition to avoid infinite loop
 			HP.maxTasks = presentIteration
 			updateDependancyList()
 			updateReadyList()
@@ -189,15 +190,21 @@ if __name__ == "__main__":
 				if LP.isLocked():
 					if HP.maxTasks > 0:
 						if HP.isLocked():
+							HP.processingTime-=1.0
+							LP.processingTime-=1.0
+							currentTime+=1.0
 							pass # if HP can still be used but is not free right now
 						else:
+							getNextTastTBLS(LP)
 							pass # if HP is not locked
 					else:
 						pass # if HP is at max tasks
 				else:
+					getNextTastTBLS(LP)
 					pass # if LP is not locked
 			if currentTime < thresholdValue:
 				successFlag = 1
+			presentIteration+=1
 	# LTF()
 	print(doneList)
 	print(timeList)
