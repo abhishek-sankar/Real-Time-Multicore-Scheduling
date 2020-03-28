@@ -26,6 +26,7 @@ class Core:
 		self.mutex = 0
 		self.processingTime = 0
 		self.presentTask = None
+		self.maxTasks = 0
 
 	def isLocked(self):
 		return self.mutex
@@ -177,6 +178,7 @@ if __name__ == "__main__":
 # TBLS Algorithm	
 	def TBLS():
 		thresholdValue = 65
+		presentIteration = 0
 		while (readyList!=[] or processingList!=[]):
 			if LP.isLocked():
 				
