@@ -179,16 +179,18 @@ if __name__ == "__main__":
 	def TBLS():
 		thresholdValue = 65
 		presentIteration = 0
+		HP.maxTasks = presentIteration
 		while (readyList!=[] or processingList!=[]):
 			if LP.isLocked():
-				
-				if HP.isLocked():
-					pass
+				if HP.maxTasks > 0:
+					if HP.isLocked():
+						pass
+					else:
+						pass # if HP is not locked
 				else:
-					pass
+					pass # if HP is at max tasks
 			else:
-
-				pass
+				pass # if LP is not locked
 		
 	# LTF()
 	print(doneList)
