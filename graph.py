@@ -82,7 +82,6 @@ def getNextTask(core):
 		print("Locked Core gets another task, error!\n")
 
 
-currentTime = 0
 if __name__ == "__main__":
 
 	g = { "t0" : ["t1","t2","t4"],
@@ -120,59 +119,65 @@ if __name__ == "__main__":
 		if dependancyDict[task]==[]:
 			readyList.append(task)
 
-	print (readyList)
-	print (dependancyDict)
+	# print (readyList)
+	# print (dependancyDict)
 	HP = Core("HP",0) #HP is 0, because the t[task][0] has HP value
 	LP = Core("LP",1) # LP is 1, because the t[task][1] has LP value
-	print(checkEmpty())
-	print(len(readyList))
+	# print(checkEmpty())
+	# print(len(readyList))
 # LTF algorithm
-	while (readyList!=[] or processingList!=[]):
-		if LP.isLocked():
-			print("Entered LP is locked\n",LP.presentTask," executing\n",LP.processingTime," time remaining\n")
-			if HP.isLocked():
-				print("Entered HP is locked\n")
-				currentTime+=0.1
-				HP.processingTime-=0.1
-				LP.processingTime-=0.1
-				if (HP.processingTime - 0.1) <= 0:
-					print("Entered HP.time < 0\n")
-					print(HP.presentTask," finished\n")
-					doneList.append(HP.presentTask)
-					currentTime += HP.processingTime
-					LP.processingTime -= HP.processingTime # change this to min of the two
-					timeList.append(currentTime)
-					processingList.remove(HP.presentTask)
-					updateDependancyList()
-					updateReadyList()
-					print(doneList)
-					HP.unlock()
-				if (LP.processingTime - 0.1) <= 0:
-					print(LP.presentTask," finished\n")
-					doneList.append(LP.presentTask)
-					currentTime+=LP.processingTime 
-					HP.processingTime-=LP.processingTime # change this to min of the two 
-					timeList.append(currentTime)					
-					processingList.remove(LP.presentTask)
-					updateDependancyList()
-					updateReadyList()
-					LP.unlock()
-			else:
-				if len(readyList)!=0:
-					getNextTask(HP)
-				else:
-					LP.processingTime-=0.1
+	def LTF():
+		currentTime = 0
+		while (readyList!=[] or processingList!=[]):
+			if LP.isLocked():
+				print("Entered LP is locked\n",LP.presentTask," executing\n",LP.processingTime," time remaining\n")
+				if HP.isLocked():
+					print("Entered HP is locked\n")
 					currentTime+=0.1
-					if (LP.processingTime - 0.1) <= 0:
-						doneList.append(LP.presentTask)
-						currentTime += LP.processingTime
+					HP.processingTime-=0.1
+					LP.processingTime-=0.1
+					if (HP.processingTime - 0.1) <= 0:
+						print("Entered HP.time < 0\n")
+						print(HP.presentTask," finished\n")
+						doneList.append(HP.presentTask)
+						currentTime += HP.processingTime
+						LP.processingTime -= HP.processingTime # change this to min of the two
 						timeList.append(currentTime)
+						processingList.remove(HP.presentTask)
+						updateDependancyList()
+						updateReadyList()
+						print(doneList)
+						HP.unlock()
+					if (LP.processingTime - 0.1) <= 0:
+						print(LP.presentTask," finished\n")
+						doneList.append(LP.presentTask)
+						currentTime+=LP.processingTime 
+						HP.processingTime-=LP.processingTime # change this to min of the two 
+						timeList.append(currentTime)					
 						processingList.remove(LP.presentTask)
-						updateDependancyList()						
+						updateDependancyList()
 						updateReadyList()
 						LP.unlock()
-		else :
-			getNextTask(LP)
+				else:
+					if len(readyList)!=0:
+						getNextTask(HP)
+					else:
+						LP.processingTime-=0.1
+						currentTime+=0.1
+						if (LP.processingTime - 0.1) <= 0:
+							doneList.append(LP.presentTask)
+							currentTime += LP.processingTime
+							timeList.append(currentTime)
+							processingList.remove(LP.presentTask)
+							updateDependancyList()						
+							updateReadyList()
+							LP.unlock()
+			else :
+				getNextTask(LP)
+# TBLS Algorithm	
+	def TBLS():
+		pass
+	# LTF()
 	print(doneList)
 	print(timeList)
 		
