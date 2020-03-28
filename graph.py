@@ -84,6 +84,16 @@ def getNextTask(core):
 def getNextTastTBLS(core):
 	pass
 
+def checkConditionTBLS(thresholdValue,currentTime,presentIteration,size):
+	if currentTime < thresholdValue:
+		return 0
+	else:
+		if presentIteration>=size:
+			return escapePlanTBLS()  # Escape plan to be defined 
+		else:
+			return 1
+
+
 if __name__ == "__main__":
 
 	g = { "t0" : ["t1","t2","t4"],
@@ -182,7 +192,7 @@ if __name__ == "__main__":
 		currentTime = 0
 		presentIteration = 0
 		successFlag = 0
-		while not successFlag: # change condition to avoid infinite loop
+		while checkConditionTBLS(thresholdValue,currentTime,presentIteration,len(g)): # change condition to avoid infinite loop
 			HP.maxTasks = presentIteration
 			updateDependancyList()
 			updateReadyList()
@@ -202,8 +212,6 @@ if __name__ == "__main__":
 				else:
 					getNextTastTBLS(LP)
 					pass # if LP is not locked
-			if currentTime < thresholdValue:
-				successFlag = 1
 			presentIteration+=1
 	# LTF()
 	print(doneList)
