@@ -6,6 +6,7 @@ class Task:
 		self.WLP = WLP
 		self.ALP = ALP
 		self.alphaLP = alphaLP
+		self.core = None
 		if AHP == None:
 			self.AHP = 1.0
 		if alphaHP == None:
@@ -47,6 +48,7 @@ readyList = []
 processingList = []
 doneList = []
 timeList = []
+taskList = []
 
 def checkEmpty():
 	if len(readyList)==0:
@@ -76,6 +78,7 @@ def getNextTask(core):
 			val = i
 	core.processingTime=t[readyList[val]][core.power]
 	core.presentTask = readyList[val]
+	taskList[readyList[val]].core = core.name
 	if not core.isLocked():
 		core.lock()
 		processingList.append(readyList.pop(val))
@@ -111,7 +114,6 @@ if __name__ == "__main__":
 		for child in g[task]:
 			dependancyDict[child].append(task)
 	print(dependancyDict)
-	taskList = []
 	for taskName in g:
 		task = Task(taskName, t[taskName][0],t[taskName][1],t[taskName][2],t[taskName][3])
 		taskList.append(task)
@@ -202,7 +204,7 @@ if __name__ == "__main__":
 				else:
 					getNextTastTBLS(LP)
 					pass # if LP is not locked
-			if currentTime < thresholdValue:
+			if currentTime <= thresholdValue:
 				successFlag = 1
 			presentIteration+=1
 	# LTF()
