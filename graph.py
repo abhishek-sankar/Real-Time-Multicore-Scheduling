@@ -99,7 +99,7 @@ def checkConditionTBLS(currentTime,presentIteration,size,thresholdValue=65):
 			return 1
 
 def findUSfactor():
-	min=1000
+	min=c["t0"][0]-doneData["t0"][0]
 	minTask="t0"
 	for task in doneList:
 		if(doneData[task][1]) :
