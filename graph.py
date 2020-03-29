@@ -50,6 +50,8 @@ doneList = []
 timeList = []
 taskList = []
 doneData={}
+r=[]
+s=[]
 frameLength=100
 
 
@@ -108,18 +110,18 @@ def totalTime():
 def updateContingencyData() :
 	startTime=frameLength-totalTime()[1]
 	print(startTime)
-	for task in doneList:
+	for task in r:
 		c[task][1]=startTime
 		startTime+=t[task][1]
 		c[task][0]=startTime-t[task][0]
-
+	print("Contingency schedule :  :",c)
 		
 
 
 def findUSfactor():
 	min=c["t0"][0]-doneData["t0"][0]
 	minTask="t0"
-	for task in doneList:
+	for task in r:
 		if(doneData[task][1]) :
 			if(min>(c[task][0]-doneData[task][0])) :
 				minTask=task
@@ -129,7 +131,7 @@ def findUSfactor():
 			if(min>(c[task][1]-doneData[task][0])) :
 				minTask=task
 				contingencyCore=1
-				min=c[task][0]-doneData[task][0]
+				min=c[task][1]-doneData[task][0]
 	print(minTask)
 	USFactor=doneData[minTask][0]/c[minTask][contingencyCore]
 	return USFactor
@@ -200,6 +202,8 @@ if __name__ == "__main__":
 						print("Entered HP.time < 0\n")
 						print(HP.presentTask," finished\n")
 						doneList.append(HP.presentTask)
+						s.append(HP.presentTask)
+
 						currentTime += HP.processingTime
 						doneData[HP.presentTask]=[currentTime,0]
 						LP.processingTime -= HP.processingTime # change this to min of the two
@@ -212,6 +216,7 @@ if __name__ == "__main__":
 					if (LP.processingTime - 0.1) <= 0:
 						print(LP.presentTask," finished\n")
 						doneList.append(LP.presentTask)
+						r.append(LP.presentTask)
 						currentTime+=LP.processingTime 
 						doneData[LP.presentTask]=[currentTime,1]
 						HP.processingTime-=LP.processingTime # change this to min of the two 
@@ -228,6 +233,7 @@ if __name__ == "__main__":
 						currentTime+=0.1
 						if (LP.processingTime - 0.1) <= 0:
 							doneList.append(LP.presentTask)
+							r.append(LP.presentTask)
 							currentTime += LP.processingTime
 							doneData[LP.presentTask]=[currentTime,1]
 							timeList.append(currentTime)
@@ -272,10 +278,10 @@ if __name__ == "__main__":
 				successFlag = 1
 			presentIteration+=1
 	LTF()
-	print(doneData)
-	print(findUSfactor())
-	print(doneList)
-	print(timeList)
+	r=r+s
 	updateContingencyData()
+	print(doneData)
+	print("Scaling Factor : :",findUSfactor())
+
 		
 # todo find out why 2x t1,t2 came, and also when to update ready list and other lists
