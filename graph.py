@@ -50,6 +50,7 @@ doneList = []
 timeList = []
 taskList = []
 doneData={}
+frameLength=100
 
 
 def checkEmpty():
@@ -97,6 +98,23 @@ def checkConditionTBLS(currentTime,presentIteration,size,thresholdValue=65):
 			return None #escapePlanTBLS()  # Escape plan to be defined 
 		else:
 			return 1
+def totalTime():
+	total=[0,0]
+	for i in t :
+		total[0]+=t[i][0]
+		total[1]+=t[i][1]
+	print(total)
+	return total
+def updateContingencyData() :
+	startTime=frameLength-totalTime()[1]
+	print(startTime)
+	for task in doneList:
+		c[task][1]=startTime
+		startTime+=t[task][1]
+		c[task][0]=startTime-t[task][0]
+
+		
+
 
 def findUSfactor():
 	min=c["t0"][0]-doneData["t0"][0]
@@ -258,5 +276,6 @@ if __name__ == "__main__":
 	print(findUSfactor())
 	print(doneList)
 	print(timeList)
+	updateContingencyData()
 		
 # todo find out why 2x t1,t2 came, and also when to update ready list and other lists
