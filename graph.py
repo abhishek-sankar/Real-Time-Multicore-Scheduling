@@ -49,6 +49,8 @@ processingList = []
 doneList = []
 timeList = []
 taskList = []
+doneData={}
+
 
 def checkEmpty():
 	if len(readyList)==0:
@@ -78,7 +80,7 @@ def getNextTask(core):
 			val = i
 	core.processingTime=t[readyList[val]][core.power]
 	core.presentTask = readyList[val]
-	taskList[readyList[val]].core = core.name
+	# taskList[readyList[val]].core = core.name
 	if not core.isLocked():
 		core.lock()
 		processingList.append(readyList.pop(val))
@@ -95,6 +97,25 @@ def checkConditionTBLS(currentTime,presentIteration,size,thresholdValue=65):
 			return None #escapePlanTBLS()  # Escape plan to be defined 
 		else:
 			return 1
+
+def findUSfactor():
+	min=1000
+	minTask="t0"
+	for task in doneList:
+		if(doneData[task][1]) :
+			if(min>(c[task][0]-doneData[task][0])) :
+				minTask=task
+				min= c[task][0] - doneData[task][0]
+				contingencyCore=0
+		else:
+			if(min>(c[task][1]-doneData[task][0])) :
+				minTask=task
+				contingencyCore=1
+				min=c[task][0]-doneData[task][0]
+	print(minTask)
+	USFactor=doneData[minTask][0]/c[minTask][contingencyCore]
+	return USFactor
+
 
 if __name__ == "__main__":
 
@@ -113,6 +134,14 @@ if __name__ == "__main__":
 		  "t4" : [5.0,9.4,0.25,0.025],
 		  "t5" : [4.5,7.9,0.2,0.02],
 		  "t6" : [4.0,7.0,0.2,0.02],
+		}
+	c = { "t0" : [18,15],  #assuming contingency schedule --Change later
+		  "t1" : [37,23],
+		  "t2" : [55,48],
+		  "t3" : [68,61],
+		  "t4" : [78,74],
+		  "t5" : [87,84],
+		  "t6" : [92,95]
 		}
 	print("Initialized parameters\n")
 
@@ -154,6 +183,7 @@ if __name__ == "__main__":
 						print(HP.presentTask," finished\n")
 						doneList.append(HP.presentTask)
 						currentTime += HP.processingTime
+						doneData[HP.presentTask]=[currentTime,0]
 						LP.processingTime -= HP.processingTime # change this to min of the two
 						timeList.append(currentTime)
 						processingList.remove(HP.presentTask)
@@ -165,6 +195,7 @@ if __name__ == "__main__":
 						print(LP.presentTask," finished\n")
 						doneList.append(LP.presentTask)
 						currentTime+=LP.processingTime 
+						doneData[LP.presentTask]=[currentTime,1]
 						HP.processingTime-=LP.processingTime # change this to min of the two 
 						timeList.append(currentTime)					
 						processingList.remove(LP.presentTask)
@@ -180,6 +211,7 @@ if __name__ == "__main__":
 						if (LP.processingTime - 0.1) <= 0:
 							doneList.append(LP.presentTask)
 							currentTime += LP.processingTime
+							doneData[LP.presentTask]=[currentTime,1]
 							timeList.append(currentTime)
 							processingList.remove(LP.presentTask)
 							updateDependancyList()						
@@ -221,7 +253,9 @@ if __name__ == "__main__":
 			if currentTime <= thresholdValue:
 				successFlag = 1
 			presentIteration+=1
-	# LTF()
+	LTF()
+	print(doneData)
+	print(findUSfactor())
 	print(doneList)
 	print(timeList)
 		
