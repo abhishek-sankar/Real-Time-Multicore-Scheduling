@@ -49,6 +49,8 @@ processingList = []
 doneList = []
 timeList = []
 taskList = []
+successFlag = 0
+
 
 def checkEmpty():
 	if len(readyList)==0:
@@ -78,23 +80,24 @@ def getNextTask(core,TBLS=None):
 		if t[readyList[i]][TBLS]>max:
 			max = t[readyList[i]][TBLS]
 			val = i
-	core.processingTime=t[readyList[val]][TBLS]
+	core.processingTime=t[readyList[val]][core.power]
 	core.presentTask = readyList[val]
-	taskList[readyList[val]].core = core.name
+	# (taskList[readyList[val]]).core = core.name
 	if not core.isLocked():
 		core.lock()
 		processingList.append(readyList.pop(val))
 	else:
 		print("Locked Core gets another task, error!\n")
 
-def checkConditionTBLS(currentTime,presentIteration,size,thresholdValue=65):
-	if currentTime < thresholdValue:
-		return 0
-	else:
-		if presentIteration>=size:
-			return None #escapePlanTBLS()  # Escape plan to be defined 
-		else:
-			return 1
+def exitCheckTBLS(presentIterations, successFlag, processDict):
+	if presentIterations >= len(processDict):
+		return True
+	if successFlag == 1:
+		return True
+	return False
+	
+	
+
 
 if __name__ == "__main__":
 
@@ -119,10 +122,10 @@ if __name__ == "__main__":
 	dependancyDict = {}
 	for task in g:
 		dependancyDict[task]=[]
-	for task in g:
-		for child in g[task]:
-			dependancyDict[child].append(task)
-	print(dependancyDict)
+	# for task in g:
+		# for child in g[task]:
+		# 	dependancyDict[child].append(task)
+	# print(dependancyDict)
 	for taskName in g:
 		task = Task(taskName, t[taskName][0],t[taskName][1],t[taskName][2],t[taskName][3])
 		taskList.append(task)
@@ -188,41 +191,87 @@ if __name__ == "__main__":
 			else :
 				getNextTask(LP)
 # TBLS Algorithm	
-	def TBLS():
-		thresholdValue = 65
-		currentTime = 0
-		presentIteration = 0
-		successFlag = 0
-		while checkConditionTBLS(currentTime,presentIteration,len(g)): # change condition to avoid infinite loop
-			HP.maxTasks = presentIteration
-			updateDependancyList()
-			updateReadyList()
-			while (readyList!=[] or processingList!=[]):
-				if LP.isLocked():
-					if HP.maxTasks > 0:
-						if HP.isLocked(): # if HP can still be used but is not free right now
-							HP.processingTime-=1.0
-							LP.processingTime-=1.0
-							currentTime+=1.0
-							if (HP.processingTime - 1.0) <=0:
-								currentTime+=HP.processingTime
-								LP.processingTime-=HP.processingTime
-								doneList.append(HP.presentTask)
-								timeList.append(currentTime)
-								updateDependancyList()
-								updateReadyList()
-								HP.unlock()
-						else: # if HP is not locked
-							getNextTask(HP,0)
-					else: # if HP is at max tasks
-						pass 
+	presentIteration = 0
+	successFlag = 0
+	thresholdTime = 65
+	while not exitCheckTBLS(presentIteration,successFlag,t):
+		currentTimeTBLS = 0
+		HP.maxTasks = presentIteration
+		readyList = []
+		processingList = []
+		doneList = []
+		timeList = []
+		LP.processingTime = 0
+		HP.processingTime = 0
+		LP.unlock()
+		HP.unlock()
+		for task in g:
+			for child in g[task]:
+				dependancyDict[child].append(task)
+		for task in dependancyDict:
+			if dependancyDict[task]==[]:
+				readyList.append(task)
+	
+		while (readyList!=[] or processingList!=[]):
+			print("Entered inner while")
+			if LP.isLocked():
+				print("Entered LP.isLocked")
+				if HP.isLocked():
+					print("Entered HP.isLocked")
+					LP.processingTime-=1.0
+					HP.processingTime-=1.0
+					currentTimeTBLS+=1.0
+					if (HP.processingTime - 1.0 <= 0): 
+						currentTimeTBLS+=HP.processingTime
+						LP.processingTime-=HP.processingTime
+						doneList.append(HP.presentTask)
+						HP.processingTime = 0
+						processingList.remove(HP.presentTask)
+						timeList.append(currentTimeTBLS)
+						updateDependancyList()
+						updateReadyList()
+						HP.unlock()
+					if (LP.processingTime - 1.0 <= 0):
+						currentTimeTBLS+=LP.processingTime
+						HP.processingTime-=LP.processingTime
+						doneList.append(LP.presentTask)
+						timeList.append(currentTimeTBLS)						
+						LP.processingTime = 0
+						if LP.presentTask in processingList:
+							processingList.remove(LP.presentTask)
+						updateDependancyList()
+						updateReadyList()
+						LP.unlock()
 				else:
-					getNextTask(LP,0) # if LP is not locked
-			if currentTime <= thresholdValue:
-				successFlag = 1
-			presentIteration+=1
+					if HP.maxTasks > 0 and len(readyList)!=0:
+						HP.maxTasks-=1
+						getNextTask(HP,0)
+					else:
+						LP.processingTime-=1.0
+						currentTimeTBLS+=1.0
+						if (LP.processingTime - 1.0) <= 0:
+							doneList.append(LP.presentTask)
+							currentTimeTBLS += LP.processingTime
+							timeList.append(currentTimeTBLS)
+							processingList.remove(LP.presentTask)
+							updateDependancyList()						
+							updateReadyList()
+							LP.unlock()
+			else:
+				getNextTask(LP,0)
+			if currentTimeTBLS > thresholdTime:
+				break	
+		if currentTimeTBLS < thresholdTime:
+			successFlag = 1	
+		presentIteration+=1	
+		print(presentIteration,"\n")
+		print(readyList)
+		print(doneList)
+		print(timeList)
 	# LTF()
+	print(readyList)
 	print(doneList)
 	print(timeList)
-		
+	if successFlag:
+		print("Successfully Allocated")
 # todo find out why 2x t1,t2 came, and also when to update ready list and other lists
