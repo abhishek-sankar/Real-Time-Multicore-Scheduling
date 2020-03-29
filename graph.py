@@ -69,14 +69,16 @@ def updateReadyList():
 					if task not in readyList:
 						readyList.append(task)
 
-def getNextTask(core):
+def getNextTask(core,TBLS=None):
+	if TBLS == None:
+		TBLS = core.power
 	max = 0
 	val = 0
 	for i in range(len(readyList)):
-		if t[readyList[i]][core.power]>max:
-			max = t[readyList[i]][core.power]
+		if t[readyList[i]][TBLS]>max:
+			max = t[readyList[i]][TBLS]
 			val = i
-	core.processingTime=t[readyList[val]][core.power]
+	core.processingTime=t[readyList[val]][TBLS]
 	core.presentTask = readyList[val]
 	taskList[readyList[val]].core = core.name
 	if not core.isLocked():
@@ -84,8 +86,6 @@ def getNextTask(core):
 		processingList.append(readyList.pop(val))
 	else:
 		print("Locked Core gets another task, error!\n")
-def getNextTastTBLS(core):
-	pass
 
 def checkConditionTBLS(currentTime,presentIteration,size,thresholdValue=65):
 	if currentTime < thresholdValue:
@@ -213,11 +213,11 @@ if __name__ == "__main__":
 								updateReadyList()
 								HP.unlock()
 						else: # if HP is not locked
-							getNextTastTBLS(LP)
-					else:
-						pass # if HP is at max tasks
+							getNextTask(HP,0)
+					else: # if HP is at max tasks
+						pass 
 				else:
-					getNextTastTBLS(LP) # if LP is not locked
+					getNextTask(LP,0) # if LP is not locked
 			if currentTime <= thresholdValue:
 				successFlag = 1
 			presentIteration+=1
