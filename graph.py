@@ -7,6 +7,8 @@ class Task:
 		self.ALP = ALP
 		self.alphaLP = alphaLP
 		self.core = None
+		self.startTime = None
+		self.endTime = None
 		if AHP == None:
 			self.AHP = 1.0
 		if alphaHP == None:
@@ -46,11 +48,13 @@ class Core:
 
 readyList = []
 processingList = []
+startList = []
+startTimeList = []
 doneList = []
 timeList = []
 taskList = []
+contingencyENdTimeList = []
 successFlag = 0
-
 
 def checkEmpty():
 	if len(readyList)==0:
@@ -71,7 +75,7 @@ def updateReadyList():
 					if task not in readyList:
 						readyList.append(task)
 
-def getNextTask(core,TBLS=None):
+def getNextTask(core,currentTime=None,TBLS=None):
 	if TBLS == None:
 		TBLS = core.power
 	max = 0
@@ -82,7 +86,13 @@ def getNextTask(core,TBLS=None):
 			val = i
 	core.processingTime=t[readyList[val]][core.power]
 	core.presentTask = readyList[val]
-	# (taskList[readyList[val]]).core = core.name
+	startList.append(readyList[val])
+	startTimeList.append(currentTime)
+	for task in taskList:
+		if task.name == readyList[val]:
+			task.core = core.name
+			task.startTime = currentTime
+			break
 	if not core.isLocked():
 		core.lock()
 		processingList.append(readyList.pop(val))
@@ -96,8 +106,6 @@ def exitCheckTBLS(presentIterations, successFlag, processDict):
 		return True
 	return False
 	
-	
-
 
 if __name__ == "__main__":
 
@@ -122,18 +130,14 @@ if __name__ == "__main__":
 	dependancyDict = {}
 	for task in g:
 		dependancyDict[task]=[]
-	# for task in g:
-		# for child in g[task]:
-		# 	dependancyDict[child].append(task)
+
 	# print(dependancyDict)
 	for taskName in g:
 		task = Task(taskName, t[taskName][0],t[taskName][1],t[taskName][2],t[taskName][3])
 		taskList.append(task)
 
 	# appends latest ready elements to readyList
-	for task in dependancyDict:
-		if dependancyDict[task]==[]:
-			readyList.append(task)
+
 
 	# print (readyList)
 	# print (dependancyDict)
@@ -141,9 +145,16 @@ if __name__ == "__main__":
 	LP = Core("LP",1) # LP is 1, because the t[task][1] has LP value
 	# print(checkEmpty())
 	# print(len(readyList))
+
 # LTF algorithm
 	def LTF():
 		currentTime = 0
+		for task in g:
+			for child in g[task]:
+				dependancyDict[child].append(task)
+		for task in dependancyDict:
+			if dependancyDict[task]==[]:
+				readyList.append(task)
 		while (readyList!=[] or processingList!=[]):
 			if LP.isLocked():
 				print("Entered LP is locked\n",LP.presentTask," executing\n",LP.processingTime," time remaining\n")
@@ -159,6 +170,9 @@ if __name__ == "__main__":
 						currentTime += HP.processingTime
 						LP.processingTime -= HP.processingTime # change this to min of the two
 						timeList.append(currentTime)
+						for task in taskList:
+							if task.name == HP.presentTask:
+								task.endTime = currentTime
 						processingList.remove(HP.presentTask)
 						updateDependancyList()
 						updateReadyList()
@@ -169,14 +183,17 @@ if __name__ == "__main__":
 						doneList.append(LP.presentTask)
 						currentTime+=LP.processingTime 
 						HP.processingTime-=LP.processingTime # change this to min of the two 
-						timeList.append(currentTime)					
+						timeList.append(currentTime)	
+						for task in taskList:
+							if task.name == LP.presentTask:
+								task.endTime = currentTime				
 						processingList.remove(LP.presentTask)
 						updateDependancyList()
 						updateReadyList()
 						LP.unlock()
 				else:
 					if len(readyList)!=0:
-						getNextTask(HP)
+						getNextTask(HP,currentTime)
 					else:
 						LP.processingTime-=0.1
 						currentTime+=0.1
@@ -184,12 +201,15 @@ if __name__ == "__main__":
 							doneList.append(LP.presentTask)
 							currentTime += LP.processingTime
 							timeList.append(currentTime)
+							for task in taskList:
+								if task.name == LP.presentTask:
+									task.endTime = currentTime
 							processingList.remove(LP.presentTask)
 							updateDependancyList()						
 							updateReadyList()
 							LP.unlock()
 			else :
-				getNextTask(LP)
+				getNextTask(LP,currentTime)
 # TBLS Algorithm	
 	presentIteration = 0
 	successFlag = 0
@@ -226,6 +246,10 @@ if __name__ == "__main__":
 						LP.processingTime-=HP.processingTime
 						doneList.append(HP.presentTask)
 						HP.processingTime = 0
+						for task in taskList:
+							if task.name == HP.presentTask:
+								task.endTime = currentTimeTBLS
+								break
 						processingList.remove(HP.presentTask)
 						timeList.append(currentTimeTBLS)
 						updateDependancyList()
@@ -237,6 +261,10 @@ if __name__ == "__main__":
 						doneList.append(LP.presentTask)
 						timeList.append(currentTimeTBLS)						
 						LP.processingTime = 0
+						for task in taskList:
+							if task.name == LP.presentTask:
+								task.endTime = currentTimeTBLS
+								break
 						if LP.presentTask in processingList:
 							processingList.remove(LP.presentTask)
 						updateDependancyList()
@@ -245,7 +273,7 @@ if __name__ == "__main__":
 				else:
 					if HP.maxTasks > 0 and len(readyList)!=0:
 						HP.maxTasks-=1
-						getNextTask(HP,0)
+						getNextTask(HP,currentTimeTBLS,0)
 					else:
 						LP.processingTime-=1.0
 						currentTimeTBLS+=1.0
@@ -253,12 +281,16 @@ if __name__ == "__main__":
 							doneList.append(LP.presentTask)
 							currentTimeTBLS += LP.processingTime
 							timeList.append(currentTimeTBLS)
+							for task in taskList:
+								if task.name == LP.presentTask:
+									task.endTime = currentTimeTBLS
+									break							
 							processingList.remove(LP.presentTask)
 							updateDependancyList()						
 							updateReadyList()
 							LP.unlock()
 			else:
-				getNextTask(LP,0)
+				getNextTask(LP,currentTimeTBLS,0)
 			if currentTimeTBLS > thresholdTime:
 				break	
 		if currentTimeTBLS < thresholdTime:
@@ -274,4 +306,6 @@ if __name__ == "__main__":
 	print(timeList)
 	if successFlag:
 		print("Successfully Allocated")
-# todo find out why 2x t1,t2 came, and also when to update ready list and other lists
+
+
+		
