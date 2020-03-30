@@ -47,16 +47,18 @@ class Core:
 		elif self.mutex == 0:
 			return False # ie it didn't work
 
-readyList = []
-processingList = []
-startList = []
-startTimeList = []
-doneList = []
-timeList = []
-taskList = []
-contingencyEndTimeList = []
-successFlag = 0
-
+readyList = [] # to keep a queue of ready tasks
+processingList = [] # keep track of those in cores
+startList = [] # keep track of the order in which processes start
+startTimeList = [] # keep track of start times
+doneList = [] # Keep track of the order of completion of tasks
+timeList = [] # Completion times
+taskList = [] # The main lost with details of all tasks
+contingencyEndTimeList = [] # to figure out Contingency end times
+contingencyEndTaskList = [] # keep track of which task that time belongs to
+scaledTimeList = [] # stores end result after scaling time
+successFlag = 0 # to check success events such as allocation withiin threshold time
+frameTime = 100 # time for each frame
 def checkEmpty():
 	if len(readyList)==0:
 		return True
@@ -137,7 +139,7 @@ if __name__ == "__main__":
 		task = Task(taskName, t[taskName][0],t[taskName][1],t[taskName][2],t[taskName][3])
 		taskList.append(task)
 
-	# appends latest ready elements to readyList
+
 
 
 	# print (readyList)
@@ -149,6 +151,7 @@ if __name__ == "__main__":
 # LTF algorithm
 	def LTF():
 		currentTime = 0
+		# appends latest ready elements to readyList
 		for task in g:
 			for child in g[task]:
 				dependancyDict[child].append(task)
@@ -229,6 +232,7 @@ if __name__ == "__main__":
 				currentTimeContingency+=LP.processingTime
 				LP.processingTime = 0
 				contingencyEndTimeList.append(currentTimeContingency)
+				contingencyEndTaskList.append(LP.presentTask)
 				for task in taskList:
 					if task.name == LP.presentTask:
 						task.contingencyActivationTime = currentTimeContingency
@@ -240,8 +244,11 @@ if __name__ == "__main__":
 				LP.unlock()
 		else:
 			getNextTask(LP,currentTimeContingency,1)
+	print("Contingency end time and task lists\n")
 	print(contingencyEndTimeList)
-# Uniform Scaling : Part #2 Find out scaling factor
+	print(contingencyEndTaskList,"\n")
+
+		# for i in range(len(timeList)):
 
 # TBLS Algorithm
  	
@@ -332,11 +339,28 @@ if __name__ == "__main__":
 		# print(presentIteration)
 		presentIteration+=1	
 	# print(readyList)
+	print("Result of TBLS Scheduling, end time and task Id\n")
 	print(doneList)
-	print(timeList)
+	print(timeList,"\n")
 	# LTF()
 	if successFlag:
 		print("Successfully Allocated")
-
+	# Uniform Scaling : Part #2 Find out scaling factor
+	extraTime = frameTime - contingencyEndTimeList[len(contingencyEndTimeList)-1]
+	for i in range(len(taskList)):
+		taskList[i].contingencyActivationTime+=extraTime
+		if taskList[i].core == "LP":
+			taskList[i].contingencyActivationTime-=taskList[i].WHP
+		else:
+			taskList[i].contingencyActivationTime-=taskList[i].WLP
+	diff = 1000000
+	totalTimeForTaskExec = 0
+	scalingFactor = 1
+	for task in taskList:
+		diffTask = task.contingencyActivationTime - task.endTime
+		if diffTask < diff:
+			diff = diffTask
+			scalingFactor = ((task.endTime - task.startTime)/(task.endTime-task.startTime+diff))
+	print("Scaling Factor for \nHP: ", scalingFactor,"\nLP", 0.8*scalingFactor)
 
 		
