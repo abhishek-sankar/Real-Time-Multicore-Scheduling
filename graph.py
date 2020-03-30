@@ -9,6 +9,7 @@ class Task:
 		self.core = None
 		self.startTime = None
 		self.endTime = None
+		self.contingencyActivationTime = None
 		if AHP == None:
 			self.AHP = 1.0
 		if alphaHP == None:
@@ -53,7 +54,7 @@ startTimeList = []
 doneList = []
 timeList = []
 taskList = []
-contingencyENdTimeList = []
+contingencyEndTimeList = []
 successFlag = 0
 
 def checkEmpty():
@@ -143,8 +144,7 @@ if __name__ == "__main__":
 	# print (dependancyDict)
 	HP = Core("HP",0) #HP is 0, because the t[task][0] has HP value
 	LP = Core("LP",1) # LP is 1, because the t[task][1] has LP value
-	# print(checkEmpty())
-	# print(len(readyList))
+
 
 # LTF algorithm
 	def LTF():
@@ -210,7 +210,41 @@ if __name__ == "__main__":
 							LP.unlock()
 			else :
 				getNextTask(LP,currentTime)
-# TBLS Algorithm	
+# Uniform Scaling : Part #1 Prepare contingency time list
+	readyList = []
+	processingList = []	
+	currentTimeContingency = 0
+	for task in g:
+		for child in g[task]:
+			dependancyDict[child].append(task)
+	for task in dependancyDict:
+		if dependancyDict[task]==[]:
+			readyList.append(task)
+	while readyList!=[] or processingList!=[]:
+		if LP.isLocked():
+			LP.processingTime-=1.0
+			currentTimeContingency+=1.0
+			if LP.processingTime - 1.0 <=0:
+				doneList.append(LP.presentTask)
+				currentTimeContingency+=LP.processingTime
+				LP.processingTime = 0
+				contingencyEndTimeList.append(currentTimeContingency)
+				for task in taskList:
+					if task.name == LP.presentTask:
+						task.contingencyActivationTime = currentTimeContingency
+						break
+				if LP.presentTask in processingList:
+					processingList.remove(LP.presentTask)
+				updateDependancyList()
+				updateReadyList()
+				LP.unlock()
+		else:
+			getNextTask(LP,currentTimeContingency,1)
+	print(contingencyEndTimeList)
+# Uniform Scaling : Part #2 Find out scaling factor
+
+# TBLS Algorithm
+ 	
 	presentIteration = 0
 	successFlag = 0
 	thresholdTime = 65
@@ -233,11 +267,11 @@ if __name__ == "__main__":
 				readyList.append(task)
 	
 		while (readyList!=[] or processingList!=[]):
-			print("Entered inner while")
+			# print("Entered inner while")
 			if LP.isLocked():
-				print("Entered LP.isLocked")
+				# print("Entered LP.isLocked")
 				if HP.isLocked():
-					print("Entered HP.isLocked")
+					# print("Entered HP.isLocked")
 					LP.processingTime-=1.0
 					HP.processingTime-=1.0
 					currentTimeTBLS+=1.0
@@ -295,15 +329,12 @@ if __name__ == "__main__":
 				break	
 		if currentTimeTBLS < thresholdTime:
 			successFlag = 1	
+		# print(presentIteration)
 		presentIteration+=1	
-		print(presentIteration,"\n")
-		print(readyList)
-		print(doneList)
-		print(timeList)
-	# LTF()
-	print(readyList)
+	# print(readyList)
 	print(doneList)
 	print(timeList)
+	# LTF()
 	if successFlag:
 		print("Successfully Allocated")
 
