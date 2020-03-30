@@ -49,6 +49,11 @@ processingList = []
 doneList = []
 timeList = []
 taskList = []
+doneData={}
+r=[]
+s=[]
+frameLength=100
+
 
 def checkEmpty():
 	if len(readyList)==0:
@@ -80,7 +85,7 @@ def getNextTask(core,TBLS=None):
 			val = i
 	core.processingTime=t[readyList[val]][TBLS]
 	core.presentTask = readyList[val]
-	taskList[readyList[val]].core = core.name
+	# taskList[readyList[val]].core = core.name
 	if not core.isLocked():
 		core.lock()
 		processingList.append(readyList.pop(val))
@@ -95,6 +100,42 @@ def checkConditionTBLS(currentTime,presentIteration,size,thresholdValue=65):
 			return None #escapePlanTBLS()  # Escape plan to be defined 
 		else:
 			return 1
+def totalTime():
+	total=[0,0]
+	for i in t :
+		total[0]+=t[i][0]
+		total[1]+=t[i][1]
+	print(total)
+	return total
+def updateContingencyData() :
+	startTime=frameLength-totalTime()[1]
+	print(startTime)
+	for task in r:
+		c[task][1]=startTime
+		startTime+=t[task][1]
+		c[task][0]=startTime-t[task][0]
+	print("Contingency schedule :  :",c)
+		
+
+
+def findUSfactor():
+	min=c["t0"][0]-doneData["t0"][0]
+	minTask="t0"
+	for task in r:
+		if(doneData[task][1]) :
+			if(min>(c[task][0]-doneData[task][0])) :
+				minTask=task
+				min= c[task][0] - doneData[task][0]
+				contingencyCore=0
+		else:
+			if(min>(c[task][1]-doneData[task][0])) :
+				minTask=task
+				contingencyCore=1
+				min=c[task][1]-doneData[task][0]
+	print(minTask)
+	USFactor=doneData[minTask][0]/c[minTask][contingencyCore]
+	return USFactor
+
 
 if __name__ == "__main__":
 
@@ -113,6 +154,14 @@ if __name__ == "__main__":
 		  "t4" : [5.0,9.4,0.25,0.025],
 		  "t5" : [4.5,7.9,0.2,0.02],
 		  "t6" : [4.0,7.0,0.2,0.02],
+		}
+	c = { "t0" : [18,15],  #assuming contingency schedule --Change later
+		  "t1" : [37,23],
+		  "t2" : [55,48],
+		  "t3" : [68,61],
+		  "t4" : [78,74],
+		  "t5" : [87,84],
+		  "t6" : [92,95]
 		}
 	print("Initialized parameters\n")
 
@@ -153,7 +202,10 @@ if __name__ == "__main__":
 						print("Entered HP.time < 0\n")
 						print(HP.presentTask," finished\n")
 						doneList.append(HP.presentTask)
+						s.append(HP.presentTask)
+
 						currentTime += HP.processingTime
+						doneData[HP.presentTask]=[currentTime,0]
 						LP.processingTime -= HP.processingTime # change this to min of the two
 						timeList.append(currentTime)
 						processingList.remove(HP.presentTask)
@@ -164,7 +216,9 @@ if __name__ == "__main__":
 					if (LP.processingTime - 0.1) <= 0:
 						print(LP.presentTask," finished\n")
 						doneList.append(LP.presentTask)
+						r.append(LP.presentTask)
 						currentTime+=LP.processingTime 
+						doneData[LP.presentTask]=[currentTime,1]
 						HP.processingTime-=LP.processingTime # change this to min of the two 
 						timeList.append(currentTime)					
 						processingList.remove(LP.presentTask)
@@ -179,7 +233,9 @@ if __name__ == "__main__":
 						currentTime+=0.1
 						if (LP.processingTime - 0.1) <= 0:
 							doneList.append(LP.presentTask)
+							r.append(LP.presentTask)
 							currentTime += LP.processingTime
+							doneData[LP.presentTask]=[currentTime,1]
 							timeList.append(currentTime)
 							processingList.remove(LP.presentTask)
 							updateDependancyList()						
@@ -221,8 +277,11 @@ if __name__ == "__main__":
 			if currentTime <= thresholdValue:
 				successFlag = 1
 			presentIteration+=1
-	# LTF()
-	print(doneList)
-	print(timeList)
+	LTF()
+	r=r+s
+	updateContingencyData()
+	print(doneData)
+	print("Scaling Factor : :",findUSfactor())
+
 		
 # todo find out why 2x t1,t2 came, and also when to update ready list and other lists
